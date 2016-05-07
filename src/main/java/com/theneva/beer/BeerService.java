@@ -1,14 +1,12 @@
 package com.theneva.beer;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin
@@ -18,9 +16,26 @@ public class BeerService
     private BeerRepository beerRepository;
 
     @RequestMapping(path = "/beers", method = RequestMethod.GET)
-    public Iterable<Beer> all()
+    public ResponseEntity all(
+            @RequestParam(name = "id", required = false) final String idQuery)
     {
-        return beerRepository.findAll();
+        if (idQuery == null)
+        {
+            return ResponseEntity.ok(beerRepository.findAll());
+        }
+
+        try
+        {
+            final List<Long> ids = Arrays.stream(idQuery.split(","))
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(beerRepository.findAll(ids));
+        }
+        catch (final NumberFormatException e)
+        {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @RequestMapping(path = "/beers", method = RequestMethod.POST)
@@ -28,6 +43,12 @@ public class BeerService
     {
         beerRepository.save(beer);
         return beer;
+    }
+
+    @RequestMapping(path = "/beers/{id}", method = RequestMethod.GET)
+    public Beer byId(@PathVariable("id") final long id)
+    {
+        return beerRepository.findOne(id);
     }
 
     @RequestMapping(path = "/beers/create-hack", method = RequestMethod.GET)
