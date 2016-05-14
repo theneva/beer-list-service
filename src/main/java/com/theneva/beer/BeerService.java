@@ -34,7 +34,8 @@ public class BeerService
         }
         catch (final NumberFormatException e)
         {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body("IDs must be longs separed by commas.");
         }
     }
 
